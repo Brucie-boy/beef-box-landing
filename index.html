@@ -1,99 +1,108 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Beef Box — Join Invite</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="Join this Beef Box case." />
   <style>
-    :root { color-scheme: dark; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#0b0b0b; color:#fff; }
-    .wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
-    .card { width:100%; max-width:520px; background:#141414; border:1px solid #222; border-radius:16px; padding:24px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
-    h1 { margin:0 0 8px; font-size:24px; }
-    p { margin:8px 0; color:#bbb; }
-    .code { background:#1d1d1d; border:1px solid #2a2a2a; padding:10px 12px; border-radius:10px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color:#9be66e; display:inline-block; }
-    .row { display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; }
-    .btn { appearance:none; border:0; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer; }
-    .primary { background:#00cfff; color:#000; }
-    .ghost { background:#232323; color:#fff; }
-    .muted { color:#888; font-size:14px; margin-top:8px; }
-    .small { font-size:12px; color:#777; margin-top:12px; }
-    a { color:#8ecbff; text-decoration:none; }
+    :root {
+      color-scheme: dark;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: #0b0b0b;
+      color: #fff;
+      display: grid;
+      min-height: 100svh;
+      place-items: center;
+    }
+    .card {
+      width: min(640px, 92vw);
+      background: #131313;
+      border: 1px solid #242424;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    p { margin: 10px 0; color: #cfcfcf; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+    button, a.btn {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform .04s ease;
+    }
+    .primary { background: #00cfff; color: #000; }
+    .secondary { background: #262626; color: #fff; }
+    button:active, a.btn:active { transform: translateY(1px); }
+    .dim { color: #9aa0a6; font-size: 13px; margin-top: 14px; }
+    .idpill {
+      display:inline-block; padding:6px 10px; border-radius: 999px;
+      background:#1e1e1e; border:1px solid #2a2a2a; color:#9bdcff;
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Opening Beef Box…</h1>
-      <p>If you have the app installed, it should open in a moment.</p>
-      <p><strong>Invite code:</strong> <span id="code" class="code">(detecting…)</span></p>
+  <main class="card">
+    <h1>You've been summoned 🍖</h1>
+    <p>Someone wants you to join a Beef Box case.</p>
+    <p id="beefIdWrap" style="display:none">Beef ID: <span id="beefId" class="idpill"></span></p>
 
-      <div class="row">
-        <button class="btn primary" id="openAppBtn">Open in App</button>
-        <button class="btn ghost" id="copyLinkBtn">Copy Link</button>
-      </div>
-
-      <p class="muted">Don’t have the app? You’ll be redirected to your app store automatically.</p>
-      <p class="small">If nothing happens, tap <a id="storeLink" href="#">get the app</a>.</p>
+    <div class="row">
+      <button id="openAppBtn" class="primary">Open in Beef Box</button>
+      <a id="downloadBtn" class="btn secondary" href="#" rel="noopener">Download the App</a>
     </div>
-  </div>
+
+    <p class="dim">If you already have the app, tap <b>Open in Beef Box</b>. If nothing happens, install the app and try again.</p>
+  </main>
 
   <script>
-    // ---- configurable store links (replace when your store pages are live) ----
-    const IOS_STORE = "https://apps.apple.com/app/id0000000000";   // TODO: replace
-    const ANDROID_STORE = "https://play.google.com/store/apps/details?id=com.beefbox"; // TODO: replace
-    const FALLBACK_HOME = "https://beef-box-landing.vercel.app/";   // optional fallback
+    // --- Parse /invite/:beefId from the URL ---
+    const path = window.location.pathname; // e.g. "/invite/pgs43bcc"
+    const match = path.match(/^\/invite\/([^\/?#]+)/i);
+    const beefId = match ? decodeURIComponent(match[1]) : null;
 
-    // Parse invite code from /invite/:code (also works if URL has trailing slashes or query)
-    const path = location.pathname;
-    const match = path.match(/\/invite\/([^\/\?\#]+)/i);
-    const inviteCode = match ? decodeURIComponent(match[1]) : "";
+    // Temporary store links — replace with real App Store/Play links when ready
+    const IOS_STORE = "https://apps.apple.com/";    // TODO: put your real iOS App Store URL
+    const ANDROID_STORE = "https://play.google.com/"; // TODO: put your real Play Store URL
 
-    const appLink = `beefbox://invite/${inviteCode}`;
-    const webInviteLink = `${location.origin}/invite/${inviteCode}`;
+    // Your custom scheme
+    const SCHEME = "beefbox://invite/";
 
-    // Fill code + store link
-    document.getElementById("code").textContent = inviteCode || "(none)";
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const storeHref = isIOS ? IOS_STORE : (isAndroid ? ANDROID_STORE : FALLBACK_HOME);
-    document.getElementById("storeLink").href = storeHref;
+    // Update UI
+    if (beefId) {
+      document.getElementById('beefId').textContent = beefId;
+      document.getElementById('beefIdWrap').style.display = 'block';
+    }
 
-    // Manual buttons
-    document.getElementById("openAppBtn").onclick = () => {
-      window.location.href = appLink;
-    };
-    document.getElementById("copyLinkBtn").onclick = async () => {
-      try {
-        await navigator.clipboard.writeText(webInviteLink);
-        alert("Invite link copied!");
-      } catch (e) {
-        // Fallback
-        const ta = document.createElement('textarea');
-        ta.value = webInviteLink;
-        document.body.appendChild(ta);
-        ta.select(); document.execCommand('copy'); ta.remove();
-        alert("Invite link copied!");
-      }
-    };
+    // Basic platform sniff (good enough for this landing)
+    const ua = navigator.userAgent || "";
+    const isAndroid = /Android/i.test(ua);
+    const isIOS = /iPhone|iPad|iPod/i.test(ua);
 
-    // Auto-open app, then redirect to store if not installed
-    (function smartOpen() {
-      // iOS Safari may pause timers on background; visibilitychange helps detect success
-      let storeTimer = setTimeout(() => { window.location.href = storeHref; }, 1500);
+    const downloadBtn = document.getElementById('downloadBtn');
+    downloadBtn.href = isAndroid ? ANDROID_STORE : IOS_STORE;
 
-      const handleVisibility = () => {
-        if (document.visibilityState === 'hidden') {
-          // User likely switched to app → cancel store redirect
-          clearTimeout(storeTimer);
-        }
-      };
-      document.addEventListener('visibilitychange', handleVisibility, { once: true });
+    // Deep link open + fallback on click
+    document.getElementById('openAppBtn').addEventListener('click', () => {
+      const deepLink = SCHEME + (beefId || "");
 
-      // Attempt deep link
-      window.location.href = appLink;
-    })();
+      // Try to open the app
+      window.location.href = deepLink;
+
+      // Fallback to the correct store after ~1.2s
+      setTimeout(() => {
+        window.location.href = isAndroid ? ANDROID_STORE : IOS_STORE;
+      }, 1200);
+    });
   </script>
 </body>
 </html>
