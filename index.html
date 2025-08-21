@@ -1,47 +1,99 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Beef Box</title>
+  <meta charset="utf-8" />
+  <title>Beef Box — Join Invite</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#000000" />
   <style>
-    body {
-      background-color: #111;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      text-align: center;
-    }
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-    }
-    p {
-      font-size: 1.2rem;
-      margin-bottom: 2rem;
-    }
-    a {
-      display: inline-block;
-      padding: 12px 24px;
-      background: #e63946;
-      color: white;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
-    }
-    a:hover {
-      background: #d62828;
-    }
+    :root { color-scheme: dark; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#0b0b0b; color:#fff; }
+    .wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+    .card { width:100%; max-width:520px; background:#141414; border:1px solid #222; border-radius:16px; padding:24px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+    h1 { margin:0 0 8px; font-size:24px; }
+    p { margin:8px 0; color:#bbb; }
+    .code { background:#1d1d1d; border:1px solid #2a2a2a; padding:10px 12px; border-radius:10px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color:#9be66e; display:inline-block; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; }
+    .btn { appearance:none; border:0; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer; }
+    .primary { background:#00cfff; color:#000; }
+    .ghost { background:#232323; color:#fff; }
+    .muted { color:#888; font-size:14px; margin-top:8px; }
+    .small { font-size:12px; color:#777; margin-top:12px; }
+    a { color:#8ecbff; text-decoration:none; }
   </style>
 </head>
 <body>
-  <h1>🔥 Beef Box 🔥</h1>
-  <p>Your Beef Summons awaits...</p>
-  <a href="https://expo.dev/client">Download Beef Box App</a>
+  <div class="wrap">
+    <div class="card">
+      <h1>Opening Beef Box…</h1>
+      <p>If you have the app installed, it should open in a moment.</p>
+      <p><strong>Invite code:</strong> <span id="code" class="code">(detecting…)</span></p>
+
+      <div class="row">
+        <button class="btn primary" id="openAppBtn">Open in App</button>
+        <button class="btn ghost" id="copyLinkBtn">Copy Link</button>
+      </div>
+
+      <p class="muted">Don’t have the app? You’ll be redirected to your app store automatically.</p>
+      <p class="small">If nothing happens, tap <a id="storeLink" href="#">get the app</a>.</p>
+    </div>
+  </div>
+
+  <script>
+    // ---- configurable store links (replace when your store pages are live) ----
+    const IOS_STORE = "https://apps.apple.com/app/id0000000000";   // TODO: replace
+    const ANDROID_STORE = "https://play.google.com/store/apps/details?id=com.beefbox"; // TODO: replace
+    const FALLBACK_HOME = "https://beef-box-landing.vercel.app/";   // optional fallback
+
+    // Parse invite code from /invite/:code (also works if URL has trailing slashes or query)
+    const path = location.pathname;
+    const match = path.match(/\/invite\/([^\/\?\#]+)/i);
+    const inviteCode = match ? decodeURIComponent(match[1]) : "";
+
+    const appLink = `beefbox://invite/${inviteCode}`;
+    const webInviteLink = `${location.origin}/invite/${inviteCode}`;
+
+    // Fill code + store link
+    document.getElementById("code").textContent = inviteCode || "(none)";
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const storeHref = isIOS ? IOS_STORE : (isAndroid ? ANDROID_STORE : FALLBACK_HOME);
+    document.getElementById("storeLink").href = storeHref;
+
+    // Manual buttons
+    document.getElementById("openAppBtn").onclick = () => {
+      window.location.href = appLink;
+    };
+    document.getElementById("copyLinkBtn").onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(webInviteLink);
+        alert("Invite link copied!");
+      } catch (e) {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = webInviteLink;
+        document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+        alert("Invite link copied!");
+      }
+    };
+
+    // Auto-open app, then redirect to store if not installed
+    (function smartOpen() {
+      // iOS Safari may pause timers on background; visibilitychange helps detect success
+      let storeTimer = setTimeout(() => { window.location.href = storeHref; }, 1500);
+
+      const handleVisibility = () => {
+        if (document.visibilityState === 'hidden') {
+          // User likely switched to app → cancel store redirect
+          clearTimeout(storeTimer);
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibility, { once: true });
+
+      // Attempt deep link
+      window.location.href = appLink;
+    })();
+  </script>
 </body>
 </html>
